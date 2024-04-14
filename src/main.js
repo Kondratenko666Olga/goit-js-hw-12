@@ -11,25 +11,35 @@ const form = document.querySelector('.search');
 const input = form.querySelector('.inputSearch');
 const gallery = document.querySelector('.gallery');
 const loader = document.querySelector('.loader');
+const loadBtn = document.querySelector('.loadBtn'); 
+const loaderMain = document.querySelector('.loaderMain');
+
+let query;
+let page = 1;
+let maxPage;
 
 
 form.addEventListener('submit', handleFormSubmit);
+loadBtn.addEventListener('click', clickLoadBtn);
+
 
 async function handleFormSubmit(event) {
     event.preventDefault();
+    hideLoadBtn();
     loader.style.display = 'block';
-    const query = input.value.trim();
+    query = input.value.trim();
    
-
     if (!query) {
         displayErrorMessage('Please enter a search query.');
         return;
     }
-
+    showLoaderEl();
     try {
         clearGallery();
-        const images = await fetchImages(query);
+        const images = await fetchImages(query, page);
+        maxPage = Math.ceil(images.totalHits / 15);
         if (images.length === 0) {
+            hideLoaderEl();
             displayErrorMessage('Sorry, there are no images matching your search query. Please try again!');
             return;
         }
@@ -42,6 +52,9 @@ async function handleFormSubmit(event) {
         input.value ='';
         const lightbox = new SimpleLightbox('.gallery a', { captionsData: 'alt' });
     }
+    hideLoaderEl();
+  checkBtnVisibleStatus();
+  event.target.reset();
 }
 
 function displayImages(images) {
@@ -59,3 +72,59 @@ function displayErrorMessage(message) {
     });
 }
 
+async function clickLoadBtn() {
+    page += 1;
+    showLoaderEl();
+  
+    try {
+      const data = await fetchImages(query, page);
+      displayImages(data);
+    } catch (err) {
+      showError(err);
+    }
+  
+    hideLoaderEl();
+    checkBtnVisibleStatus();
+
+    const height = gallery.firstElementChild.getBoundingClientRect().height;
+  
+    scrollBy({
+      behavior: 'smooth',
+      top: height * 2,
+    });
+};
+
+function showLoadBtn() {
+    loadBtn.classList.remove('hidden');
+  }
+  
+  function hideLoadBtn() {
+    loadBtn.classList.add('hidden');
+  }
+  
+  function showLoaderEl() {
+    loaderMain.classList.remove('hidden');
+  }
+  
+  function hideLoaderEl() {
+    loaderMain.classList.add('hidden');
+  }
+
+  function showError(msg) {
+    iziToast.error({
+        title: 'Error',
+        message: msg,
+        position: 'topRight',
+        timeout: 3000,
+        closeOnClick: true,
+    });
+  }
+
+  function checkBtnVisibleStatus() {
+    if (page >= maxPage) {
+      hideLoadBtn();
+      showError("We're sorry, but you've reached the end of search results.");
+    } else {
+      showLoadBtn();
+    }
+  }
