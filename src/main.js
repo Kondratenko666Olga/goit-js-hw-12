@@ -15,7 +15,7 @@ const loadBtn = document.querySelector('.loadBtn');
 const loaderMain = document.querySelector('.loaderMain');
 
 let query;
-let page = 1;
+let page;
 let maxPage;
 
 
@@ -28,6 +28,8 @@ async function handleFormSubmit(event) {
     hideLoadBtn();
     loader.style.display = 'block';
     query = input.value.trim();
+
+    page = 1;
    
     if (!query) {
         displayErrorMessage('Please enter a search query.');
