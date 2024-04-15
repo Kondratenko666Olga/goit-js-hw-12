@@ -22,6 +22,7 @@ let maxPage;
 form.addEventListener('submit', handleFormSubmit);
 loadBtn.addEventListener('click', clickLoadBtn);
 
+const lightbox = new SimpleLightbox('.gallery a', { captionsData: 'alt' });
 
 async function handleFormSubmit(event) {
     event.preventDefault();
@@ -38,21 +39,21 @@ async function handleFormSubmit(event) {
     showLoaderEl();
     try {
         clearGallery();
-        const images = await fetchImages(query, page);
-        maxPage = Math.ceil(images.totalHits / 15);
-        if (images.length === 0) {
+        const data = await fetchImages(query, page);
+        maxPage = Math.ceil(data.totalHits / 15);
+        if (data.hits.length === 0) {
             hideLoaderEl();
             displayErrorMessage('Sorry, there are no images matching your search query. Please try again!');
             return;
         }
-        displayImages(images);
+        displayImages(data.hits);
     } catch (error) {
         console.error('Error searching images:', error);
         displayErrorMessage('Failed to fetch images. Please try again later.');
     }finally {
         loader.style.display = 'none';
         input.value ='';
-        const lightbox = new SimpleLightbox('.gallery a', { captionsData: 'alt' });
+        lightbox.refresh();
     }
     hideLoaderEl();
   checkBtnVisibleStatus();
@@ -80,7 +81,7 @@ async function clickLoadBtn() {
   
     try {
       const data = await fetchImages(query, page);
-      displayImages(data);
+      displayImages(data.hits);
     } catch (err) {
       showError(err);
     }
@@ -123,6 +124,7 @@ function showLoadBtn() {
   }
 
   function checkBtnVisibleStatus() {
+    debugger;
     if (page >= maxPage) {
       hideLoadBtn();
       showError("We're sorry, but you've reached the end of search results.");
